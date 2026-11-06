@@ -1,0 +1,36 @@
+---
+# Dashboard with Docker label-based auto-discovery - see README for how to
+# label other services so they show up here with zero config on this side.
+x-logging:
+  &default-logging
+  driver: "json-file"
+  options:
+    max-size: "1m"
+    max-file: "1"
+    tag: "{{.Name}}"
+
+x-common-labels: &default-labels
+  logging_jobname: "containerlogs"
+  stackname: ${STACK_NAME:-homepage}
+
+services:
+  homepage:
+    image: ghcr.io/gethomepage/homepage:${HOMEPAGE_VER:-v2.7.0}
+    container_name: homepage
+    restart: unless-stopped
+    environment:
+      HOMEPAGE_ALLOWED_HOSTS: "${HOMEPAGE_ALLOWED_HOSTS:?set HOMEPAGE_ALLOWED_HOSTS to every host it is reached through, port included}"
+    volumes:
+      # Human-edited YAML (docker.yaml, services.yaml, settings.yaml, etc) -
+      # a bind mount, not a named volume, so it's directly editable/visible
+      # from the repo clone, same as this engagement's other config-file
+      # (not opaque-state) services - see docker-vscode/docker-traefik-portainer.
+      - ./config:/app/config
+      # Read-only: Homepage only lists/queries containers for auto-discovery,
+      # never manages them - no write access needed.
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - "3000:3000"
+    labels:
+      <<: *default-labels
+    logging: *default-logging

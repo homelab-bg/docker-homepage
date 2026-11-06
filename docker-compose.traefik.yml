@@ -1,0 +1,29 @@
+---
+# Traefik overlay - optional, same pattern as every other docker-* stack in
+# this engagement. Apply only if you want Homepage reachable via a real
+# HTTPS hostname through the shared Traefik instance:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.traefik.yml up -d
+#
+# Homepage only sits on this one Docker network (its Docker-socket access is
+# a bind mount, not network-based), so there's no multi-network ambiguity for
+# Traefik's Docker provider to guess wrong on here - unlike docker-grafana-stack's
+# grafana, no traefik.docker.network pin is needed.
+services:
+  homepage:
+    ports: !reset []
+    expose:
+      - 3000
+    networks:
+      - traefik
+    labels:
+      traefik.enable: true
+      traefik.http.routers.homepage.rule: Host(`${HOMEPAGE_HOST:?set HOMEPAGE_HOST to Homepage's hostname}`)
+      traefik.http.routers.homepage.tls: true
+      traefik.http.routers.homepage.tls.certresolver: letsencrypt
+      traefik.http.services.homepage.loadbalancer.server.port: "3000"
+
+networks:
+  traefik:
+    name: ${NETWORK:-traefik}
+    external: true

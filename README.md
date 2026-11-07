@@ -24,7 +24,9 @@ your own gitignored `.env`.
   or a database, Homepage's config (`docker.yaml`, `services.yaml`,
   `settings.yaml`, etc) is plain YAML meant to be hand-edited; a bind mount
   keeps it visible and editable directly in the repo clone, same as
-  `docker-vscode`/`docker-traefik-portainer`.
+  `docker-vscode`/`docker-traefik-portainer`. Overridable via
+  `HOMEPAGE_CONFIG_PATH` though - see "Deploying via Portainer" below, the
+  relative default doesn't work there.
 - **No authentication configured** - not asked for, and this sits behind
   Traefik on an internal-only hostname regardless (see the project's
   Traefik-is-LAN-only note) - add `HOMEPAGE_AUTH_*` later if that changes.
@@ -72,6 +74,26 @@ docker compose -f docker-compose.yml -f docker-compose.traefik.yml up -d
 Requires `HOMEPAGE_HOST` and the external `traefik` network (`NETWORK` in
 `.env`) to already exist - see `docker-traefik-portainer`.
 
+### Deploying via Portainer
+
+If this is deployed as a Portainer **git-repository** stack (not a plain
+`docker compose up` from a real clone), set `HOMEPAGE_CONFIG_PATH` to a real,
+pre-created absolute path (e.g. a CephFS/ZFS dataset) as a stack environment
+variable, not just in `.env`.
+
+Confirmed live: Portainer CE has a known, unfixed limitation
+([#2368](https://github.com/portainer/portainer/issues/2368), duplicate of
+#2046) where a relative bind-mount path in a git-based stack resolves against
+Portainer's own internal `/data` view, not the real host filesystem - even
+though Portainer's own data directory is itself bind-mounted from somewhere
+else entirely (e.g. `docker-traefik-portainer`'s `DATA_DIR`). The container
+ends up bind-mounted from whatever real directory happens to sit at the
+literal path `/data/compose/<stack-id>/config` on the host root filesystem -
+not the cephfs/ZFS-backed location anyone would expect - and Homepage just
+writes its own stock default config there, with no error or warning that
+anything's wrong. "Relative Path Volumes" that actually works is a Business
+Edition-only feature; an absolute host path is the realistic fix on CE.
+
 ## Observability
 
 Deploy the [`docker-grafana-stack`](https://github.com/homelab-bg/docker-grafana-stack)
@@ -80,7 +102,6 @@ running on this host - `STACK_NAME` above is already wired for it.
 
 ## Known limitations / not yet done
 
-- Not yet deployed or tested live - compose files and config are built and
-  reasoned through against Homepage's own docs, but `docker compose up -d`
-  hasn't actually been run anywhere yet.
-- No GitHub remote yet - working from this local repo until one's created.
+- Confirmed live (docker-green, deployed via Portainer): needs
+  `HOMEPAGE_CONFIG_PATH` set to a real absolute path, or it silently runs on
+  Homepage's own stock default config - see "Deploying via Portainer" above.

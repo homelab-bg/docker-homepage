@@ -22,10 +22,19 @@ services:
       HOMEPAGE_ALLOWED_HOSTS: "${HOMEPAGE_ALLOWED_HOSTS:?set HOMEPAGE_ALLOWED_HOSTS to every host it is reached through, port included}"
     volumes:
       # Human-edited YAML (docker.yaml, services.yaml, settings.yaml, etc) -
-      # a bind mount, not a named volume, so it's directly editable/visible
-      # from the repo clone, same as this engagement's other config-file
-      # (not opaque-state) services - see docker-vscode/docker-traefik-portainer.
-      - ./config:/app/config
+      # a bind mount, not a named volume, so it's directly editable/visible,
+      # same as this engagement's other config-file (not opaque-state)
+      # services - see docker-vscode/docker-traefik-portainer.
+      #
+      # Overridable, unlike those - confirmed live: deployed as a Portainer
+      # git-repository stack (not plain `docker compose up`), a relative
+      # ./config path resolves against Portainer's own internal /data view,
+      # not the real host filesystem (Portainer CE issue #2368/#2046, a
+      # known unfixed limitation - "Relative Path Volumes" that actually
+      # work is Business Edition only). Set HOMEPAGE_CONFIG_PATH to a real,
+      # pre-created absolute host path when deploying this way; the
+      # relative default only works for a plain local `docker compose up`.
+      - ${HOMEPAGE_CONFIG_PATH:-./config}:/app/config
       # Read-only: Homepage only lists/queries containers for auto-discovery,
       # never manages them - no write access needed.
       - /var/run/docker.sock:/var/run/docker.sock:ro

@@ -10,3 +10,9 @@ config/services.yaml
 config/bookmarks.yaml
 config/widgets.yaml
 config/settings.yaml
+
+# Real widget credentials - never committed, same as docker-postfix's
+# secrets/ directory. secrets/ itself stays (so the dir exists for a fresh
+# clone), only its contents are ignored.
+secrets/proxmox_username
+secrets/proxmox_password

@@ -20,14 +20,19 @@ services:
     restart: unless-stopped
     environment:
       HOMEPAGE_ALLOWED_HOSTS: "${HOMEPAGE_ALLOWED_HOSTS:?set HOMEPAGE_ALLOWED_HOSTS to every host it is reached through, port included}"
-      # Homepage substitutes any HOMEPAGE_VAR_* container env var for a
-      # matching {{HOMEPAGE_VAR_*}} placeholder in config/*.yaml (confirmed
-      # via Homepage's own docs) - this is how a widget's credentials (e.g.
-      # services.yaml's Proxmox token below) stay out of the config files
-      # themselves. Optional/empty by default; add more the same way as
-      # more widgets need credentials.
-      HOMEPAGE_VAR_PROXMOX_USERNAME: ${HOMEPAGE_VAR_PROXMOX_USERNAME:-}
-      HOMEPAGE_VAR_PROXMOX_PASSWORD: ${HOMEPAGE_VAR_PROXMOX_PASSWORD:-}
+      # Homepage substitutes a HOMEPAGE_FILE_* container env var's file
+      # CONTENTS for a matching {{HOMEPAGE_FILE_*}} placeholder in
+      # config/*.yaml (confirmed via Homepage's own docs) - this is how a
+      # widget's credentials (e.g. services.yaml's Proxmox token) stay out
+      # of both the config files and any plaintext env var. The paths
+      # below aren't secret - only the files they point at are - so they're
+      # fixed, not something to override per-deployment. Add more the same
+      # way as more widgets need credentials.
+      HOMEPAGE_FILE_PROXMOX_USERNAME: /run/secrets/proxmox_username
+      HOMEPAGE_FILE_PROXMOX_PASSWORD: /run/secrets/proxmox_password
+    secrets:
+      - proxmox_username
+      - proxmox_password
     volumes:
       # Human-edited YAML (docker.yaml, services.yaml, settings.yaml, etc) -
       # a bind mount, not a named volume, so it's directly editable/visible,
@@ -51,3 +56,14 @@ services:
     labels:
       <<: *default-labels
     logging: *default-logging
+
+secrets:
+  # Same Portainer git-stack path-resolution bug as HOMEPAGE_CONFIG_PATH
+  # above applies here too - compose's secrets `file:` source is resolved
+  # the same relative-to-project-dir way a bind-mount volume is. Override
+  # HOMEPAGE_SECRETS_PATH to a real, pre-created absolute path (e.g.
+  # alongside HOMEPAGE_CONFIG_PATH) when deploying that way.
+  proxmox_username:
+    file: ${HOMEPAGE_SECRETS_PATH:-./secrets}/proxmox_username
+  proxmox_password:
+    file: ${HOMEPAGE_SECRETS_PATH:-./secrets}/proxmox_password

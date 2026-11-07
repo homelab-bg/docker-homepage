@@ -30,15 +30,29 @@ your own gitignored `.env`.
 - **No authentication configured** - not asked for, and this sits behind
   Traefik on an internal-only hostname regardless (see the project's
   Traefik-is-LAN-only note) - add `HOMEPAGE_AUTH_*` later if that changes.
+- **Widget credentials via `HOMEPAGE_FILE_*` + Docker `secrets:`**, not
+  plaintext env vars - same reasoning as `docker-postfix`'s AWS keys.
+  Homepage substitutes a `HOMEPAGE_FILE_*` env var's file *contents* for a
+  matching `{{HOMEPAGE_FILE_*}}` placeholder in `config/*.yaml` (confirmed
+  via Homepage's own docs), so a widget's token never appears in a config
+  file or as a `docker inspect`-visible value.
 
 ## Setup
 
 ```sh
 cp .env.example .env
 cp config/docker.yaml.example config/docker.yaml
+mkdir -p secrets
+echo -n "your-real-proxmox-token-id" > secrets/proxmox_username
+echo -n "your-real-proxmox-token-secret" > secrets/proxmox_password
 # edit .env: HOMEPAGE_ALLOWED_HOSTS at minimum
 docker compose up -d
 ```
+
+Both secrets files must exist for `docker compose up` to start at all -
+Compose reads a `secrets: file:` source eagerly, regardless of whether
+`services.yaml` actually has a Proxmox widget. Create them with placeholder
+content if not using the widget yet.
 
 `config/docker.yaml.example` is a generic local-socket template - the real
 `config/docker.yaml` (gitignored, like `.env`) is where any remote host
@@ -77,9 +91,10 @@ Requires `HOMEPAGE_HOST` and the external `traefik` network (`NETWORK` in
 ### Deploying via Portainer
 
 If this is deployed as a Portainer **git-repository** stack (not a plain
-`docker compose up` from a real clone), set `HOMEPAGE_CONFIG_PATH` to a real,
-pre-created absolute path (e.g. a CephFS/ZFS dataset) as a stack environment
-variable, not just in `.env`.
+`docker compose up` from a real clone), set `HOMEPAGE_CONFIG_PATH` *and*
+`HOMEPAGE_SECRETS_PATH` to real, pre-created absolute paths (e.g. a
+CephFS/ZFS dataset) as stack environment variables, not just in `.env` -
+Portainer git-stacks don't read a repo `.env` file at all.
 
 Confirmed live: Portainer CE has a known, unfixed limitation
 ([#2368](https://github.com/portainer/portainer/issues/2368), duplicate of

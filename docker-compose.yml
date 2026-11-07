@@ -20,6 +20,14 @@ services:
     restart: unless-stopped
     environment:
       HOMEPAGE_ALLOWED_HOSTS: "${HOMEPAGE_ALLOWED_HOSTS:?set HOMEPAGE_ALLOWED_HOSTS to every host it is reached through, port included}"
+      # Homepage substitutes any HOMEPAGE_VAR_* container env var for a
+      # matching {{HOMEPAGE_VAR_*}} placeholder in config/*.yaml (confirmed
+      # via Homepage's own docs) - this is how a widget's credentials (e.g.
+      # services.yaml's Proxmox token below) stay out of the config files
+      # themselves. Optional/empty by default; add more the same way as
+      # more widgets need credentials.
+      HOMEPAGE_VAR_PROXMOX_USERNAME: ${HOMEPAGE_VAR_PROXMOX_USERNAME:-}
+      HOMEPAGE_VAR_PROXMOX_PASSWORD: ${HOMEPAGE_VAR_PROXMOX_PASSWORD:-}
     volumes:
       # Human-edited YAML (docker.yaml, services.yaml, settings.yaml, etc) -
       # a bind mount, not a named volume, so it's directly editable/visible,

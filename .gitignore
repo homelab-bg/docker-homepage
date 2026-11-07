@@ -1,1 +1,12 @@
 .env
+
+# Real config - once docker.yaml lists remote hosts, or services.yaml/
+# bookmarks.yaml/widgets.yaml/settings.yaml name real internal services, all
+# of it is identifying homelab data, same reasoning as .env. Only the
+# generic *.example template is committed; copy it in place and keep the
+# real file out of git, same as .env/.env.example.
+config/docker.yaml
+config/services.yaml
+config/bookmarks.yaml
+config/widgets.yaml
+config/settings.yaml

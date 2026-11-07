@@ -33,15 +33,19 @@ your own gitignored `.env`.
 
 ```sh
 cp .env.example .env
+cp config/docker.yaml.example config/docker.yaml
 # edit .env: HOMEPAGE_ALLOWED_HOSTS at minimum
 docker compose up -d
 ```
 
-`config/docker.yaml` is committed pre-seeded with the local socket entry;
-Homepage generates its own default `settings.yaml`/`services.yaml`/
-`bookmarks.yaml`/`widgets.yaml` into the same bind-mounted `config/` directory
-on first start if they don't already exist - edit those directly, or through
-Homepage's own built-in config editor in the UI.
+`config/docker.yaml.example` is a generic local-socket template - the real
+`config/docker.yaml` (gitignored, like `.env`) is where any remote host
+entries actually live, since those name real internal hosts. Homepage
+generates its own default `settings.yaml`/`services.yaml`/`bookmarks.yaml`/
+`widgets.yaml` into the same bind-mounted `config/` directory on first start
+if they don't already exist - those are gitignored too once they name real
+services, for the same reason. Edit them directly, or through Homepage's own
+built-in config editor in the UI.
 
 ### Making another service show up on the dashboard
 
